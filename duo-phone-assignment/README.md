@@ -113,7 +113,7 @@ DUO_IKEY=DIXXXXXXXXXXXXXXXXXX
 DUO_SKEY=your-admin-api-secret-key
 DUO_HOST=api-xxxxxxxx.duosecurity.com
 DUO_PHONE=+19105551234
-DUO_GROUP=Your Duo Group Name
+# DUO_GROUP=Your Duo Group Name
 ```
 
 Use E.164 format for the phone number:
@@ -122,15 +122,47 @@ Use E.164 format for the phone number:
 +19105551234
 ```
 
-Set `DUO_GROUP` to a Duo group name or group ID. To intentionally assign the
-phone to every Duo user, set:
+### Optional `DUO_GROUP` Variable
+
+`DUO_GROUP` is optional. Leave it commented out or remove it when you want to
+choose the target group each time the script runs:
+
+```env
+# DUO_GROUP=Your Duo Group Name
+```
+
+When `DUO_GROUP` is not configured, the script retrieves your available Duo
+groups and displays them before asking which group should receive the phone:
+
+```text
+Available Duo groups
+  - Executives (DGXXXXXXXXXXXXXXXXXX)
+  - Help Desk (DGYYYYYYYYYYYYYYYYYY)
+  - ALL (every Duo user)
+
+Enter the target Duo group name, group ID, or ALL:
+```
+
+You may enter a displayed group name, its group ID, or `ALL`.
+
+Set `DUO_GROUP` when you want the script to automatically target the same group
+without displaying the selection prompt:
+
+```env
+DUO_GROUP=Help Desk
+```
+
+You can also use a group ID:
+
+```env
+DUO_GROUP=DGYYYYYYYYYYYYYYYYYY
+```
+
+To intentionally assign the phone to every Duo user, set:
 
 ```env
 DUO_GROUP=ALL
 ```
-
-If `DUO_GROUP` is omitted, the script lists the available Duo groups and then
-prompts for a group name, group ID, or `ALL`.
 
 ## Run the Script
 
