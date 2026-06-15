@@ -1,6 +1,7 @@
 # Add Shared Phone to Duo Users
 
-This script uses the Duo Admin API to add one phone number to Duo user accounts.
+This script uses the Duo Admin API to add one phone number to the users in a
+specified Duo group.
 
 It is safe to run multiple times. If a user already has the phone number assigned, the script skips that user.
 
@@ -9,10 +10,10 @@ It is safe to run multiple times. If a user already has the phone number assigne
 The script will:
 
 1. Connect to Duo using a Duo Admin API application
-2. Read Duo users
+2. Find the specified Duo group and read its users
 3. Look up the phone number in Duo
 4. Create the phone if it does not already exist
-5. Assign the phone to users who do not already have it
+5. Assign the phone to users in the target group who do not already have it
 6. Skip users who already have the phone
 7. Print a summary
 
@@ -112,6 +113,7 @@ DUO_IKEY=DIXXXXXXXXXXXXXXXXXX
 DUO_SKEY=your-admin-api-secret-key
 DUO_HOST=api-xxxxxxxx.duosecurity.com
 DUO_PHONE=+19105551234
+DUO_GROUP=Your Duo Group Name
 ```
 
 Use E.164 format for the phone number:
@@ -119,6 +121,16 @@ Use E.164 format for the phone number:
 ```text
 +19105551234
 ```
+
+Set `DUO_GROUP` to a Duo group name or group ID. To intentionally assign the
+phone to every Duo user, set:
+
+```env
+DUO_GROUP=ALL
+```
+
+If `DUO_GROUP` is omitted, the script lists the available Duo groups and then
+prompts for a group name, group ID, or `ALL`.
 
 ## Run the Script
 
@@ -140,14 +152,15 @@ Example:
 
 ```text
 Connecting to Duo...
-Found 42 Duo users.
+Found 12 users in target: Help Desk (DGXXXXXXXXXXXXXXXXXX)
 Found existing Duo phone: +19105551234
 
 Planned changes
 Phone number:         +19105551234
-Total Duo users:      42
+Target:               Help Desk (DGXXXXXXXXXXXXXXXXXX)
+Users in target:      12
 Already assigned:     5
-Will be assigned:     37
+Will be assigned:     7
 
 Type YES to apply these changes:
 ```

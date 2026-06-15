@@ -70,6 +70,57 @@ def get_or_create_phone(admin_api, phone_number):
     return phone
 
 
+def get_target_users(admin_api):
+    group_selector = os.getenv("DUO_GROUP")
+    groups = None
+
+    if not group_selector:
+        groups = list(admin_api.get_groups_generator())
+
+        print()
+        print("Available Duo groups")
+        for group in sorted(groups, key=lambda item: item["name"].casefold()):
+            print(f"  - {group['name']} ({group['group_id']})")
+        print("  - ALL (every Duo user)")
+        print()
+
+        group_selector = input("Enter the target Duo group name, group ID, or ALL: ").strip()
+
+    if not group_selector:
+        print("ERROR: A target Duo group is required. Use ALL to target every Duo user.")
+        sys.exit(1)
+
+    if group_selector.upper() == "ALL":
+        return "ALL Duo users", list(admin_api.get_users_iterator())
+
+    if groups is None:
+        groups = list(admin_api.get_groups_generator())
+
+    matches = [
+        group for group in groups
+        if group["group_id"] == group_selector
+        or group["name"].casefold() == group_selector.casefold()
+    ]
+
+    if not matches:
+        print(f"ERROR: Duo group not found: {group_selector}")
+        print("Available Duo groups:")
+        for group in sorted(groups, key=lambda item: item["name"].casefold()):
+            print(f"  - {group['name']} ({group['group_id']})")
+        sys.exit(1)
+
+    if len(matches) > 1:
+        print(f"ERROR: Multiple Duo groups are named: {group_selector}")
+        print("Set DUO_GROUP to the desired group ID instead:")
+        for group in matches:
+            print(f"  - {group['name']} ({group['group_id']})")
+        sys.exit(1)
+
+    group = matches[0]
+    users = list(admin_api.get_group_users_iterator(group["group_id"]))
+    return f"{group['name']} ({group['group_id']})", users
+
+
 def main():
     phone_number = os.getenv("DUO_PHONE")
 
@@ -85,8 +136,8 @@ def main():
     )
 
     print("Connecting to Duo...")
-    users = admin_api.get_users()
-    print(f"Found {len(users)} Duo users.")
+    target_name, users = get_target_users(admin_api)
+    print(f"Found {len(users)} users in target: {target_name}")
 
     phone = get_or_create_phone(admin_api, phone_number)
     phone_id = phone["phone_id"]
@@ -95,6 +146,11 @@ def main():
         user["user_id"]
         for user in phone.get("users", [])
     }
+    target_user_ids = {
+        user["user_id"]
+        for user in users
+    }
+    already_assigned_count = len(existing_user_ids & target_user_ids)
 
     users_to_update = [
         user for user in users
@@ -104,13 +160,14 @@ def main():
     print()
     print("Planned changes")
     print(f"Phone number:         {phone_number}")
-    print(f"Total Duo users:      {len(users)}")
-    print(f"Already assigned:     {len(existing_user_ids)}")
+    print(f"Target:               {target_name}")
+    print(f"Users in target:      {len(users)}")
+    print(f"Already assigned:     {already_assigned_count}")
     print(f"Will be assigned:     {len(users_to_update)}")
     print()
 
     if not users_to_update:
-        print("Nothing to do. Every user already has this phone.")
+        print("Nothing to do. Every user in the target already has this phone.")
         return
 
     confirm = input("Type YES to apply these changes: ")
