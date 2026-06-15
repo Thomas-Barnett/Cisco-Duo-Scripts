@@ -68,9 +68,10 @@ Do **not** use credentials from a Microsoft RDP application. This script require
 
 These values will be added to the local `.env` file.
 
-:::warning
-Do not ever commit `.env` or `.venv/` to GitHub.
-:::
+### Warning
+
+**Do not ever commit `.env` or `.venv/` to GitHub.**
+
 
 ## Setup
 
